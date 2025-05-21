@@ -1,16 +1,20 @@
-# ligna_energy_sensor_app
+# Ligna Energy Sensor App
 
-A new Flutter project.
+Repo for Flutter-app som skannar data med BLE och visar upp resultatetsnyggt
 
-## Getting Started
+## Process för att återupprepa allt igen
 
-This project is a starting point for a Flutter application.
+ctrl shift p -> flutter create app
+git init
+byta namn i android manifet, + byta namespace https://stackoverflow.com/questions/77828097/changing-applicationid-and-namespace-in-build-gradle-causes-error
+fixa med cert bygga enligt guide: https://docs.flutter.dev/deployment/android
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+fixa resten av dependecies + flutter uppdatering
+    flutter upgrade - i android studio behövde jag uppdatera NDK
+    dart pub add intl
+    flutter pub add share_plus
+    flutter pub add path_provider
+    flutter pub add flutter_blue_plus
+    flutter pub add flutter_launcher_icons
+    dart run flutter_launcher_icons:generate (ändra i yamlfilen till var filerna ligger)
+    flutter pub run flutter_launcher_icons
