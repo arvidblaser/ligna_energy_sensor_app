@@ -18,3 +18,9 @@ fixa resten av dependecies + flutter uppdatering
     flutter pub add flutter_launcher_icons
     dart run flutter_launcher_icons:generate (ändra i yamlfilen till var filerna ligger)
     flutter pub run flutter_launcher_icons
+
+Koda koden
+Fixa Andoid Manifest
+Fixa assets i pubspec.yaml
+
+Bygga release: flutter build appbundle
