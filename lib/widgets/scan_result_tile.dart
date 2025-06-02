@@ -45,7 +45,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
  // int _secondsSinceLastUpdate = 0;
   
   final List<SensorReading> _sensorReadingList = [];
-  static const int maxDataPoints = 10;
+  static const int maxDataPoints = 2160; // var 5:e sekund -> 3h, 3*3600/5
 
   @override
   void initState() {
