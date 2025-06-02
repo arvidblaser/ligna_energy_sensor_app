@@ -105,7 +105,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   Future onRefresh() {
     if (_isScanning == false) {
-      FlutterBluePlus.startScan(timeout: const Duration(minutes: 30));
+      FlutterBluePlus.startScan(timeout: const Duration(days: 1));
     }
     if (mounted) {
       setState(() {});
@@ -145,8 +145,8 @@ class _ScanScreenState extends State<ScanScreen> {
       child: AspectRatio(
         aspectRatio: 1.0,
         child: CircularProgressIndicator(
-          backgroundColor: Colors.black12,
-          color: Colors.black26,
+          backgroundColor: Colors.white24,
+          color: Colors.white30,
         ),
       ),
     );

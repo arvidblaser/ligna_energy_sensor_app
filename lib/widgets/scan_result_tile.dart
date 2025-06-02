@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-//import 'dart:io';
-//import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+
 import 'package:share_plus/share_plus.dart';
 
 
@@ -132,22 +133,22 @@ class _ScanResultTileState extends State<ScanResultTile> {
     int? co2;
     double temperature;
     double humidity;
-    int temp_from_bytes;
-    int hum_from_bytes;
+    int tempFromBytes;
+    int humFromBytes;
     if(name.startsWith("Ligna Card") || name == "Jiva"){ // Hantera både Ligna Card och Jiva
-        temp_from_bytes = (data.entries.first.value[1] << 8) | data.entries.first.value[0];
-        hum_from_bytes = (data.entries.first.value[3] << 8) | data.entries.first.value[1];
+        tempFromBytes = (data.entries.first.value[1] << 8) | data.entries.first.value[0];
+        humFromBytes = (data.entries.first.value[3] << 8) | data.entries.first.value[1];
     }
     else{
         voltage = (data.entries.first.value[1] << 8) | data.entries.first.value[0];
-        temp_from_bytes = (data.entries.first.value[3] << 8) | data.entries.first.value[2];
-        hum_from_bytes = (data.entries.first.value[5] << 8) | data.entries.first.value[4];
+        tempFromBytes = (data.entries.first.value[3] << 8) | data.entries.first.value[2];
+        humFromBytes = (data.entries.first.value[5] << 8) | data.entries.first.value[4];
         co2 = (data.entries.first.value[7] << 8) | data.entries.first.value[6];
         if(co2 == 0) co2 = null;
     }
-    if (temp_from_bytes & 0x8000 != 0) temp_from_bytes = temp_from_bytes - 0x10000;
-    temperature = temp_from_bytes / 10;
-    humidity = hum_from_bytes / 10;
+    if (tempFromBytes & 0x8000 != 0) tempFromBytes = tempFromBytes - 0x10000;
+    temperature = tempFromBytes / 10;
+    humidity = humFromBytes / 10;
     return SensorReading(humidity: humidity, temperature: temperature, timestamp:DateTime.now(), voltage: voltage, ppm: co2);
   }
 
@@ -190,23 +191,24 @@ class _ScanResultTileState extends State<ScanResultTile> {
     return buffer.toString();
   }
 
-//
-  //Future<File> saveCSVToFile(String csvData, String fileName) async {
-  //  final directory = await getTemporaryDirectory();
-  //  final path = '${directory.path}/$fileName.csv';
-  //  final file = File(path);
-  //  return file.writeAsString(csvData);
-  //}
-//
-//  void shareFile(File file) {
-//    //Share.shareXFiles([XFile(file.path)], text: 'Here is the exported data');
-//   // SharePlus.instance.share(
-//     //   ShareParams(files: [XFile(file.path)], text : "Shared text"),
-//     // );
-//         print("Arvidshare anropas"); // Debug-utskrift
-//
-//  }
+ Future<File> saveCSVToFile(String csvData, String fileName) async {
+   final directory = await getTemporaryDirectory();
+   final path = directory.path;
+   final file = File('$path/$fileName.csv');
+   return file.writeAsString(csvData);
+ }
 
+Future<void> shareFile(String path) async {
+
+  final params = ShareParams(
+    text: 'Exported data from the Ligna Energy Sensor App',
+    files: [XFile(path)], 
+  );
+
+  final result = await SharePlus.instance.share(params);
+  //if (result.status == ShareResultStatus.success) 
+
+}
   void shareCSVData(String csvData){
     SharePlus.instance.share(
       ShareParams(title: 'Exported data from the Ligna Energy Sensor App', text: csvData)
@@ -215,11 +217,9 @@ class _ScanResultTileState extends State<ScanResultTile> {
 
   void exportAndShare(List<SensorReading> dataList) async {
     final csvData = convertToCSV(dataList);
-    print("Arvidshare anropas"); // Debug-utskrift
-    print(csvData); // Debug-utskrift
-    shareCSVData(csvData);
-    //final file = await saveCSVToFile(csvData, 'ble_data');
-    //shareFile(file);
+    //shareCSVData(csvData);
+    final file = await saveCSVToFile(csvData, 'ble_data');
+    shareFile(file.path);
 }
 
 
@@ -359,7 +359,6 @@ class _ScanResultTileState extends State<ScanResultTile> {
 
   @override
   Widget build(BuildContext context) {
-    print("Arvid hohoh Build anropas: ${DateTime.now()}"); // Debug-utskrift
     var adv = widget.result.advertisementData;
 
     // Calculate the time difference if a previous timestamp exists
