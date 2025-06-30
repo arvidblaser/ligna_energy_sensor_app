@@ -24,3 +24,23 @@ Fixa Andoid Manifest
 Fixa assets i pubspec.yaml
 
 Bygga release: flutter build appbundle
+
+## köra linux på windows
+wsl --install
+starta om o se tt användaren skapas för ubuntu (arvid / arvid) som test här
+installera wsl-extension och öppna remote ubuntu / wsl och öppna mappen
+
+aktivera flutter extension
+testa: which flutter (ska vara från home-folder och inte på windows c)
+
+````
+arvid@WIN-6K66PO3E76Q:~$ echo 'export PATH="$PATH:$HOME/flutter/bin"' >> ~/.bashrc
+arvid@WIN-6K66PO3E76Q:~$ source ~/.bashrc
+arvid@WIN-6K66PO3E76Q:~$ which flutter
+/mnt/c/flutter/bin/flutter
+arvid@WIN-6K66PO3E76Q:~$ echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.bashrc
+arvid@WIN-6K66PO3E76Q:~$ source ~/.bashrc
+arvid@WIN-6K66PO3E76Q:~$ which flutter
+/home/arvid/flutter/bin/flutter
+arvid@WIN-6K66PO3E76Q:~$ 
+````

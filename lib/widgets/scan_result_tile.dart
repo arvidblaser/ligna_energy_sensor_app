@@ -316,6 +316,9 @@ Future<void> shareFile(String path) async {
                 showTitles: true,
                 reservedSize: 40,
                 getTitlesWidget: (value, meta) {
+                  if (value == meta.min || value == meta.max) {
+                    return const SizedBox.shrink();
+                  }
                   // Konvertera millisekunder till DateTime
                   final dateTime = DateTime.fromMillisecondsSinceEpoch(value.toInt());
                   return Transform.rotate(
@@ -348,8 +351,8 @@ Future<void> shareFile(String path) async {
               preventCurveOverShooting: true,
             ),
           ],
-          minX: minTime,
-          maxX: maxTime,
+          minX: minTime - 2000,
+          maxX: maxTime + 2000,
           minY: _sensorReadingList.isEmpty ? 0 : _sensorReadingList.map((e) => e.temperature).reduce((a, b) => a < b ? a : b) - 0.2,
           maxY: _sensorReadingList.isEmpty ? 0 : _sensorReadingList.map((e) => e.temperature).reduce((a, b) => a > b ? a : b) + 0.2,
         ),

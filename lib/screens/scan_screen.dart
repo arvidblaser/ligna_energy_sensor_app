@@ -61,7 +61,7 @@ class _ScanScreenState extends State<ScanScreen> {
     }
     try {
       await FlutterBluePlus.startScan(
-        timeout: const Duration(minutes: 30),
+        timeout: const Duration(days: 1),
         webOptionalServices: [
           Guid("180f"), // battery
           Guid("180a"), // device info
