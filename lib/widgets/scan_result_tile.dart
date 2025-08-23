@@ -135,9 +135,14 @@ class _ScanResultTileState extends State<ScanResultTile> {
     double humidity;
     int tempFromBytes;
     int humFromBytes;
-    if(name.startsWith("Ligna Card") || name == "Jiva"){ // Hantera både Ligna Card och Jiva
+    if(name.startsWith("Ligna Card") || name.startsWith("Jiva")){ // Hantera både Ligna Card och Jiva
         tempFromBytes = (data.entries.first.value[1] << 8) | data.entries.first.value[0];
-        humFromBytes = (data.entries.first.value[3] << 8) | data.entries.first.value[1];
+        humFromBytes = (data.entries.first.value[3] << 8) | data.entries.first.value[2];
+    }
+    else if(name.startsWith("Gwen")){
+        tempFromBytes = (data.entries.first.value[1] << 8) | data.entries.first.value[0];
+        humFromBytes = (data.entries.first.value[3] << 8) | data.entries.first.value[2];
+        voltage = (data.entries.first.value[5] << 8) | data.entries.first.value[4];
     }
     else{
         voltage = (data.entries.first.value[1] << 8) | data.entries.first.value[0];

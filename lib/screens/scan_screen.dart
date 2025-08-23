@@ -71,7 +71,8 @@ class _ScanScreenState extends State<ScanScreen> {
         withKeywords:[
           "Ben",
           "Jiva",
-          "Ligna Card",       
+          "Ligna Card",
+          "Gwen",       
         ], // *or* any of the specified names
       );
     } catch (e, backtrace) {

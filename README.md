@@ -25,7 +25,7 @@ Fixa assets i pubspec.yaml
 
 Bygga release: flutter build appbundle
 
-## köra linux på windows
+## köra linux på windows (wsl)
 wsl --install
 starta om o se tt användaren skapas för ubuntu (arvid / arvid) som test här
 installera wsl-extension och öppna remote ubuntu / wsl och öppna mappen
@@ -44,3 +44,19 @@ arvid@WIN-6K66PO3E76Q:~$ which flutter
 /home/arvid/flutter/bin/flutter
 arvid@WIN-6K66PO3E76Q:~$ 
 ````
+Slutsats: Funkar att dra igång men hittar inte bluetooth adapter. Bättre att testa i native linux
+
+## köra windows app
+Funkade inte rakt av att ersätta alla fluttter_blue_plus med flutter_blue_plus windows
+
+indvik weboptinal services
+dart pub add flutter_blue_plus_windows
+flutter pub add win_ble
+Slutsats: inte värt besväret
+
+## köra webapp
+Funkar att hitta bluettooth-enheter.
+Man kan "parkoppla" med en Ben, datan ser dock mystisk ut / saknas
+Slutsats: kan vara värt att testa lite till men antagligen inte
+OM man kollar så kan det ha att göra med         webOptionalServices: [
+
