@@ -18,6 +18,8 @@ fixa resten av dependecies + flutter uppdatering
     flutter pub add flutter_launcher_icons
     dart run flutter_launcher_icons:generate (ändra i yamlfilen till var filerna ligger)
     flutter pub run flutter_launcher_icons
+    flutter pub add supabase_flutter
+
 
 Koda koden
 Fixa Andoid Manifest
@@ -60,3 +62,8 @@ Man kan "parkoppla" med en Ben, datan ser dock mystisk ut / saknas
 Slutsats: kan vara värt att testa lite till men antagligen inte
 OM man kollar så kan det ha att göra med         webOptionalServices: [
 
+## Databas
+Steg 1: Supabase, sign in på redan skapad användare ladda upp data
+Steg 2: långsiktig arkitektur
+    a) SignIn/SignUp skärm ->
+    b) Hamburgermeny, signOut, scanScreen, databaseScreen

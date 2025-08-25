@@ -10,8 +10,15 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'screens/bluetooth_off_screen.dart';
 import 'screens/scan_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+
+Future<void> main() async {
+    await Supabase.initialize(
+    url: 'https://sqdlrrmpprahacjsgfbr.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZGxycm1wcHJhaGFjanNnZmJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NzEzOTcsImV4cCI6MjA3MDM0NzM5N30.Hb6ujyCf2mQR22U6AA02DIqxRhc7ey0VHDRVMUZGARo',
+  );
+
   FlutterBluePlus.setLogLevel(LogLevel.info, color: true);
   runApp(const FlutterBlueApp());
 }
