@@ -67,3 +67,16 @@ Steg 1: Supabase, sign in på redan skapad användare ladda upp data
 Steg 2: långsiktig arkitektur
     a) SignIn/SignUp skärm ->
     b) Hamburgermeny, signOut, scanScreen, databaseScreen
+
+## köra raspberry pi
+klona repot
+sudo apt update && sudo apt upgrade -y
+sudo apt install code 
+sudo apt install clang
+sudo apt install cmake
+sudo apt install libgtk-3-dev
+sudo apt install mesa-utils
+
+nano ~/.bashrc
+export PATH="$PATH:/home/admin/git/flutter/bin"
+source ~/.bashrc
