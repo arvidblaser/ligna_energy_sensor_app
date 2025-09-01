@@ -290,11 +290,11 @@ class _ScanResultTileState extends State<ScanResultTile> {
 
   Future<void> signIn(SupabaseClient supabase) async {
     final AuthResponse res = await supabase.auth.signInWithPassword(
-      email: 'dummy',
+      email: 'arvidblaser@outlook.com',
       password: 'secretpassword',
     );
-    final Session? session = res.session;
-    final User? user = res.user;
+    //final Session? session = res.session;
+    //final User? user = res.user;
   }
 
   Future<void> signOut(SupabaseClient supabase) async {

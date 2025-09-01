@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'screens/bluetooth_off_screen.dart';
-import 'screens/scan_screen.dart';
+import 'screens/app_screen.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 
@@ -25,7 +26,7 @@ Future<void> main() async {
 
 //
 // This widget shows BluetoothOffScreen or
-// ScanScreen depending on the adapter state
+// ScanScreen depending on the adapter state 
 //
 class FlutterBlueApp extends StatefulWidget {
   const FlutterBlueApp({super.key});
@@ -56,10 +57,11 @@ class _FlutterBlueAppState extends State<FlutterBlueApp> {
     super.dispose();
   }
 
+// todo decide if should go directly to some other screen
   @override
   Widget build(BuildContext context) {
     Widget screen = _adapterState == BluetoothAdapterState.on
-        ? const ScanScreen()
+        ? const AppScreen() //const ScanScreen()
         : BluetoothOffScreen(adapterState: _adapterState);
 
     return MaterialApp(
