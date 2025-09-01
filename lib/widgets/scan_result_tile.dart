@@ -207,7 +207,13 @@ class _ScanResultTileState extends State<ScanResultTile> {
   }
 
   bool hasSensorReading(AdvertisementData ad) {
-    return (ad.advName.isNotEmpty && ad.serviceData.isNotEmpty);
+    if (ad.advName.isNotEmpty && ad.serviceData.isNotEmpty){
+      if (ad.advName.startsWith("Ligna Card") || ad.advName.startsWith("Jiva")
+      || ad.advName.startsWith("Gwen") || ad.advName.startsWith("Ben") ){
+        return true;
+      }
+    } 
+    return false;
   }
 
   /*        *********** */
