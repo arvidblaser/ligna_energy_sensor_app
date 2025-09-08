@@ -213,11 +213,16 @@ class _ScanResultTileState extends State<ScanResultTile> {
   }
 
   bool hasSensorReading(AdvertisementData ad) {
+    print("advertisement data:");
+    print(ad);
     if (ad.advName.isNotEmpty && ad.serviceData.isNotEmpty) {
+      print("has sensorreading-ish");
       if (haCorrectName(ad.advName)) {
+        print("all is fine!");
         return true;
       }
     }
+    print("retrun false on sensoreading");
     return false;
   }
 
