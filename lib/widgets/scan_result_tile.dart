@@ -68,15 +68,21 @@ class _ScanResultTileState extends State<ScanResultTile> {
       if (mounted) {
         // Hitta resultatet för denna enhet
         ScanResult? deviceResult;
+        print("checking results");
         for (var result in results) {
           if (result.device.remoteId == widget.result.device.remoteId) {
-            deviceResult = result;
-            break;
+            print("almost found result");
+            //if (haCorrectName(result.advertisementData.advName)) {
+              print("found result");
+              deviceResult = result;
+              break;
+            //}
           }
         }
 
         if (deviceResult != null &&
             hasSensorReading(deviceResult.advertisementData)) {
+          print("Sensorresults!");
           SensorReading sr = decodeData(
             deviceResult.advertisementData.advName,
             deviceResult.advertisementData.serviceData,
@@ -207,12 +213,24 @@ class _ScanResultTileState extends State<ScanResultTile> {
   }
 
   bool hasSensorReading(AdvertisementData ad) {
-    if (ad.advName.isNotEmpty && ad.serviceData.isNotEmpty){
-      if (ad.advName.startsWith("Ligna Card") || ad.advName.startsWith("Jiva")
-      || ad.advName.startsWith("Gwen") || ad.advName.startsWith("Ben") ){
+    if (ad.advName.isNotEmpty && ad.serviceData.isNotEmpty) {
+      if (haCorrectName(ad.advName)) {
         return true;
       }
-    } 
+    }
+    return false;
+  }
+
+  bool haCorrectName(String name) {
+    if (name.startsWith("Ligna Card") ||
+        name.startsWith("Jiva") ||
+        name.startsWith("Gwen") ||
+        name.startsWith("Ben")) {
+      print("Correct name is:$name");
+      return true;
+    }
+    print("Wrong name is:$name");
+
     return false;
   }
 
@@ -467,6 +485,12 @@ class _ScanResultTileState extends State<ScanResultTile> {
         _sensorReadingList.last.timestamp,
       );
     }
+    if (_sensorReadingList.isEmpty ||
+        !hasSensorReading(widget.result.advertisementData)) {
+      print("build a empty result tile");
+      return const SizedBox.shrink(); // Or show a placeholder/error
+    }
+    print("build a scan result tile");
 
     return ExpansionTile(
       title: _buildTitle(context),
