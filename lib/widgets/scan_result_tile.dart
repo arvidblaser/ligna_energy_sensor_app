@@ -75,13 +75,14 @@ class _ScanResultTileState extends State<ScanResultTile> {
             //if (haCorrectName(result.advertisementData.advName)) {
               print("found result");
               deviceResult = result;
+              print(result);
               break;
             //}
           }
         }
 
         if (deviceResult != null &&
-            hasSensorReading(deviceResult.advertisementData)) {
+            hasSensorReading(deviceResult.advertisementData, deviceResult.device.platformName)) {
           print("Sensorresults!");
           SensorReading sr = decodeData(
             deviceResult.advertisementData.advName,
@@ -212,12 +213,12 @@ class _ScanResultTileState extends State<ScanResultTile> {
     return _connectionState == BluetoothConnectionState.connected;
   }
 
-  bool hasSensorReading(AdvertisementData ad) {
+  bool hasSensorReading(AdvertisementData ad, String platformName) {
     print("advertisement data:");
     print(ad);
-    if (ad.advName.isNotEmpty && ad.serviceData.isNotEmpty) {
+    if ((ad.advName.isNotEmpty || platformName.isNotEmpty) && ad.serviceData.isNotEmpty) {
       print("has sensorreading-ish");
-      if (haCorrectName(ad.advName)) {
+      if (haCorrectName(ad.advName, platformName)) {
         print("all is fine!");
         return true;
       }
@@ -226,7 +227,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
     return false;
   }
 
-  bool haCorrectName(String name) {
+  bool haCorrectName(String name, String platformName) {
     if (name.startsWith("Ligna Card") ||
         name.startsWith("Jiva") ||
         name.startsWith("Gwen") ||
@@ -234,8 +235,19 @@ class _ScanResultTileState extends State<ScanResultTile> {
       print("Correct name is:$name");
       return true;
     }
-    print("Wrong name is:$name");
-
+    else {
+      print("Wrong name is:$name");
+    }
+        if (platformName.startsWith("Ligna Card") ||
+        platformName.startsWith("Jiva") ||
+        platformName.startsWith("Gwen") ||
+        platformName.startsWith("Ben")) {
+      print("Correct platformname is:$platformName");
+      return true;
+    }
+    else{
+      print("Wrong platformname is: $platformName");
+    }
     return false;
   }
 
@@ -491,7 +503,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
       );
     }
     if (_sensorReadingList.isEmpty ||
-        !hasSensorReading(widget.result.advertisementData)) {
+        !hasSensorReading(widget.result.advertisementData, widget.result.device.platformName)) {
       print("build a empty result tile");
       return const SizedBox.shrink(); // Or show a placeholder/error
     }
@@ -528,7 +540,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
             'Service Data:',
             getNiceServiceData(adv.serviceData),
           ),
-        if (hasSensorReading(adv))
+        if (hasSensorReading(adv, widget.result.device.platformName))
           _buildAdvRow(
             context,
             'Decoded Data:',
