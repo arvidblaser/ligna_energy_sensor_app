@@ -9,8 +9,15 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/sensor_reading.dart';
+import '../utils/database_service.dart';
+import '../utils/export_service.dart';
+
+
 
 final log = Logger('ScanResultLogger');
+final databaseService = DatabaseService(Supabase.instance.client);
+final exportService = ExportService();
 
 
 class ScanResultTile extends StatefulWidget {
@@ -23,21 +30,6 @@ class ScanResultTile extends StatefulWidget {
   State<ScanResultTile> createState() => _ScanResultTileState();
 }
 
-class SensorReading {
-  final double temperature;
-  final double humidity;
-  final DateTime timestamp;
-  final int? voltage;
-  final int? ppm;
-
-  SensorReading({
-    required this.humidity,
-    required this.temperature,
-    required this.timestamp,
-    this.voltage,
-    this.ppm,
-  });
-}
 
 class _ScanResultTileState extends State<ScanResultTile> {
   BluetoothConnectionState _connectionState =
@@ -91,7 +83,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
             deviceResult.advertisementData.serviceData,
           );
           addToSensorReadingList(sr);
-          addToDatabase(sr, deviceResult.advertisementData.advName);
+          databaseService.addToDatabase(sr, deviceResult.advertisementData.advName, widget.result.device.remoteId.str); // todo check if this needs to be await
           setState(() {}); // Uppdatera UI för att visa nya data
         }
       }
@@ -252,97 +244,17 @@ class _ScanResultTileState extends State<ScanResultTile> {
     return false;
   }
 
-  /*        *********** */
-  // Export thing consider using own file
-  String convertToCSV(List<SensorReading> dataList) {
-    final buffer = StringBuffer();
-    buffer.writeln('Timestamp,Temperature,Humidity,Voltage,CO2level');
-    for (var item in dataList) {
-      buffer.writeln(
-        '${item.timestamp},${item.temperature},${item.humidity},${item.voltage},${item.ppm}',
-      );
-    }
-    return buffer.toString();
-  }
-
-  Future<File> saveCSVToFile(String csvData, String fileName) async {
-    final directory = await getTemporaryDirectory();
-    final path = directory.path;
-    final file = File('$path/$fileName.csv');
-    return file.writeAsString(csvData);
-  }
-
-  Future<void> shareFile(String path) async {
-    final params = ShareParams(
-      text: 'Exported data from the Ligna Energy Sensor App',
-      files: [XFile(path)],
-    );
-
-    final result = await SharePlus.instance.share(params);
-    //if (result.status == ShareResultStatus.success)
-  }
-
-  void shareCSVData(String csvData) {
-    SharePlus.instance.share(
-      ShareParams(
-        title: 'Exported data from the Ligna Energy Sensor App',
-        text: csvData,
-      ),
-    );
-  }
-
-  void exportAndShare(List<SensorReading> dataList) async {
-    final csvData = convertToCSV(dataList);
-    //shareCSVData(csvData);
-    final file = await saveCSVToFile(csvData, 'ble_data');
-    shareFile(file.path);
-  }
-
-  Widget _buildConnectButton(BuildContext context) {
+  Widget _buildShareButton(BuildContext context) {
     return IconButton(
       icon: Icon(
         Icons.share_outlined,
       ), // https://api.flutter.dev/flutter/material/Icons-class.html
       onPressed: () {
-        exportAndShare(_sensorReadingList);
+        exportService.exportAndShare(_sensorReadingList);
       },
     );
   }
-  /*  Export data  end    *********** */
-
-  /* Database consider own file ************ */
-  Future<void> addToDatabase(SensorReading sr, String name) async {
-    final supabase = Supabase.instance.client;
-
-    signIn(supabase);
-
-    //logic
-    String mac = widget.result.device.remoteId.str;
-
-    await supabase.from('SensorData').insert({
-      "mac": mac,
-      "temperature": sr.temperature,
-      "humidity": sr.humidity,
-      "co2": sr.ppm,
-      "battery": sr.voltage,
-      "name": name,
-    });
-    signOut(supabase);
-  }
-
-  Future<void> signIn(SupabaseClient supabase) async {
-    final AuthResponse res = await supabase.auth.signInWithPassword(
-      email: 'arvidblaser@outlook.com',
-      password: 'secretpassword',
-    );
-    //final Session? session = res.session;
-    //final User? user = res.user;
-  }
-
-  Future<void> signOut(SupabaseClient supabase) async {
-    await supabase.auth.signOut();
-  }
-  /* Database end **************** */
+ 
 
   Widget _buildTitle(BuildContext context) {
     if (widget.result.device.platformName.isNotEmpty) {
@@ -513,7 +425,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
     return ExpansionTile(
       title: _buildTitle(context),
       leading: Text(widget.result.rssi.toString()),
-      trailing: _buildConnectButton(context),
+      trailing: _buildShareButton(context),
       children: <Widget>[
         if (adv.txPowerLevel != null)
           _buildAdvRow(context, 'Tx Power Level:', '${adv.txPowerLevel}'),

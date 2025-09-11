@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'scan_screen.dart';
+import 'database_screen.dart';
 
 
 class AppScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class _AppScreenState extends State<AppScreen> {
 
   static const List<Widget> _widgetOptions = <Widget>[
     ScanScreen(),
+    DatabaseScreen(),
     //AccountPage(),
   ];
 
