@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'package:logging/logging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../utils/snackbar.dart';
 import '../widgets/scan_result_tile.dart';
+
+final log = Logger('ScanScreenLogger');
+
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -51,6 +55,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   Future onScanPressed() async {
     try {
+      log.info("Pressed Scanbutton");
       // `withServices` is required on iOS for privacy purposes, ignored on android.
       var withServices = [Guid("180f")]; // Battery Level Service
       _systemDevices = await FlutterBluePlus.systemDevices(withServices);

@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +9,9 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+final log = Logger('ScanResultLogger');
+
 
 class ScanResultTile extends StatefulWidget {
   const ScanResultTile({super.key, required this.result, this.onTap});
@@ -68,14 +71,13 @@ class _ScanResultTileState extends State<ScanResultTile> {
       if (mounted) {
         // Hitta resultatet för denna enhet
         ScanResult? deviceResult;
-        print("checking results");
+        log.fine("checking results");
         for (var result in results) {
           if (result.device.remoteId == widget.result.device.remoteId) {
-            print("almost found result");
+            log.fine("almost found result");
             //if (haCorrectName(result.advertisementData.advName)) {
-              print("found result");
+              log.fine("found result: $result");
               deviceResult = result;
-              print(result);
               break;
             //}
           }
@@ -83,7 +85,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
 
         if (deviceResult != null &&
             hasSensorReading(deviceResult.advertisementData, deviceResult.device.platformName)) {
-          print("Sensorresults!");
+          log.fine("Sensorresults!");
           SensorReading sr = decodeData(
             deviceResult.advertisementData.advName,
             deviceResult.advertisementData.serviceData,
@@ -97,7 +99,7 @@ class _ScanResultTileState extends State<ScanResultTile> {
 
     // // Starta timern för att uppdatera räknaren varje sekund
     // _updateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    //       print("Build anropas: ${DateTime.now()}"); // Debug-utskrift
+    //       log.fine("Build anropas: ${DateTime.now()}"); // Debug-utskrift
     //
     //   if (mounted && _sensorReadingList.isNotEmpty) {
     //     setState(() {
@@ -214,16 +216,15 @@ class _ScanResultTileState extends State<ScanResultTile> {
   }
 
   bool hasSensorReading(AdvertisementData ad, String platformName) {
-    print("advertisement data:");
-    print(ad);
+    log.fine("advertisement data: $ad");
     if ((ad.advName.isNotEmpty || platformName.isNotEmpty) && ad.serviceData.isNotEmpty) {
-      print("has sensorreading-ish");
+      log.fine("has sensorreading-ish");
       if (haCorrectName(ad.advName, platformName)) {
-        print("all is fine!");
+        log.fine("all is fine!");
         return true;
       }
     }
-    print("retrun false on sensoreading");
+    log.fine("retrun false on sensoreading");
     return false;
   }
 
@@ -232,21 +233,21 @@ class _ScanResultTileState extends State<ScanResultTile> {
         name.startsWith("Jiva") ||
         name.startsWith("Gwen") ||
         name.startsWith("Ben")) {
-      print("Correct name is:$name");
+      log.fine("Correct name is:$name");
       return true;
     }
     else {
-      print("Wrong name is:$name");
+      log.fine("Wrong name is:$name");
     }
         if (platformName.startsWith("Ligna Card") ||
         platformName.startsWith("Jiva") ||
         platformName.startsWith("Gwen") ||
         platformName.startsWith("Ben")) {
-      print("Correct platformname is:$platformName");
+      log.fine("Correct platformname is:$platformName");
       return true;
     }
     else{
-      print("Wrong platformname is: $platformName");
+      log.fine("Wrong platformname is: $platformName");
     }
     return false;
   }
@@ -504,10 +505,10 @@ class _ScanResultTileState extends State<ScanResultTile> {
     }
     if (_sensorReadingList.isEmpty ||
         !hasSensorReading(widget.result.advertisementData, widget.result.device.platformName)) {
-      print("build a empty result tile");
+      log.fine("build a empty result tile");
       return const SizedBox.shrink(); // Or show a placeholder/error
     }
-    print("build a scan result tile");
+    log.fine("build a scan result tile");
 
     return ExpansionTile(
       title: _buildTitle(context),

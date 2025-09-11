@@ -27,6 +27,11 @@ Fixa assets i pubspec.yaml
 
 Bygga release: flutter build appbundle
 
+### Notera flchart buggade ur lite på android av okänd anledning
+  fl_chart: ^1.0.0
+  fl_chart: '>=1.0.0 <1.1.0'
+  JAg vill i slutändan använda den senaste version om det fixar sig
+
 ## köra linux på windows (wsl)
 wsl --install
 starta om o se tt användaren skapas för ubuntu (arvid / arvid) som test här

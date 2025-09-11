@@ -4,6 +4,7 @@
 // Kod baserad på exemplet under https://github.com/chipweinberger/flutter_blue_plus
 
 import 'dart:async';
+import 'package:logging/logging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -13,6 +14,7 @@ import 'screens/app_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+final log = Logger('mainLogger');
 
 Future<void> main() async {
     await Supabase.initialize(
@@ -21,6 +23,7 @@ Future<void> main() async {
   );
 
   FlutterBluePlus.setLogLevel(LogLevel.info, color: true);
+  log.info("Test log in main");
   runApp(const FlutterBlueApp());
 }
 
