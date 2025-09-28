@@ -61,7 +61,7 @@ class _AppScreenState extends State<AppScreen> {
               ),
             ),
             ListTile(
-              title: const Text('Scan Screen (second place)'),
+              title: const Text('BLE scanning'),
               selected: _selectedIndex == 0,
               onTap: () {
                 // Update the state of the app
@@ -71,7 +71,7 @@ class _AppScreenState extends State<AppScreen> {
               },
             ),
             ListTile(
-              title: const Text('Database (second place)'),
+              title: const Text('Summarized visualisation'),
               selected: _selectedIndex == 1,
               onTap: () {
                 // Update the state of the app
