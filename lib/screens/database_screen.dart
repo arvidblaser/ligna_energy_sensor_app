@@ -26,9 +26,9 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     final response = await supabase
         .from('SensorData')
         .select()
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: false);
     setState(() {
-      sensorData = List<Map<String, dynamic>>.from(response);
+      sensorData = List<Map<String, dynamic>>.from(response.reversed);
       isLoading = false;
     });
   }
