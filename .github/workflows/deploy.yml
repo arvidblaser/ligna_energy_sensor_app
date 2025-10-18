@@ -1,0 +1,52 @@
+name: Deploy to Google Play Internal Track
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Bump versionCode in build.gradle.kts
+        run: |
+          FILE=android/app/build.gradle.kts
+          CURRENT_CODE=$(grep "versionCode" $FILE | sed 's/[^0-9]*//g')
+          NEW_CODE=$((CURRENT_CODE + 1))
+          sed -i "s/versionCode = .*/versionCode = $NEW_CODE/" $FILE
+          echo "New versionCode: $NEW_CODE"
+
+      - name: Commit version bump
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "GitHub Actions"
+          git commit -am "Auto bump versionCode to $NEW_CODE" || echo "No changes to commit"
+          git push
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build app bundle
+        run: flutter build appbundle --release
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.arvdblaseref.LignaEnergySensorApp
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal

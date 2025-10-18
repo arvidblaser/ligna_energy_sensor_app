@@ -15,18 +15,58 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   final supabase = Supabase.instance.client;
   List<Map<String, dynamic>> sensorData = [];
   bool isLoading = true;
+  List<String> allMacs = [];
+  Map<String, String> macNames = {};
+  Set<String> selectedMacs = {};
+  bool isFilterDropdownOpen = false;
+  int fetchLimit = 100; // <-- Add this line
 
   @override
   void initState() {
     super.initState();
-    fetchSensorData();
+    fetchAllMacs();
+  }
+
+  Future<void> fetchAllMacs() async {
+    final response = await supabase
+        .from('SensorData')
+        .select('mac, name')
+        .order('mac', ascending: true)
+        .limit(10000);
+    final rows = response as List<dynamic>;
+    final macSet = <String>{};
+    final names = <String, String>{};
+    for (final row in rows) {
+      final mac = row['mac'] as String?;
+      final name = row['name'] as String?;
+      if (mac != null) {
+        macSet.add(mac);
+        names[mac] = name != null ? "$name ($mac)" : mac;
+      }
+    }
+    setState(() {
+      allMacs = macSet.toList();
+      macNames = names;
+      selectedMacs = Set<String>.from(macSet); // All selected by default
+      fetchSensorData();
+    });
   }
 
   Future<void> fetchSensorData() async {
+    if (selectedMacs.isEmpty) {
+      setState(() {
+        sensorData = [];
+        isLoading = false;
+      });
+      return;
+    }
+    setState(() => isLoading = true);
     final response = await supabase
         .from('SensorData')
         .select()
-        .order('created_at', ascending: false);
+        .inFilter('mac', selectedMacs.toList())
+        .order('created_at', ascending: false)
+        .limit(fetchLimit); // <-- Use fetchLimit here
     setState(() {
       sensorData = List<Map<String, dynamic>>.from(response.reversed);
       isLoading = false;
@@ -106,15 +146,24 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   }
 
   Widget sensorLineChart(List<LineChartBarData> lines, {String? title}) {
-    // Find min and max X values for better axis formatting
+    // Find min and max X and Y values for better axis formatting
     double minX = double.infinity;
     double maxX = double.negativeInfinity;
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
     for (final line in lines) {
       for (final spot in line.spots) {
         if (spot.x < minX) minX = spot.x;
         if (spot.x > maxX) maxX = spot.x;
+        if (spot.y < minY) minY = spot.y;
+        if (spot.y > maxY) maxY = spot.y;
       }
     }
+
+    // Add 10% headroom to the top of the Y axis
+    final yRange = maxY - minY;
+    final yHeadroom = yRange > 0 ? yRange * 0.1 : 1.0;
+    final displayMaxY = maxY + yHeadroom;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,8 +188,6 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 48,
-                    // todo make this depend on a choice on min and max time also
-                    //interval: 24 * 60 * 60 * 1000, // Show label every 24 hour
                     getTitlesWidget: (value, meta) {
                       final dateTime = DateTime.fromMillisecondsSinceEpoch(value.toInt());
                       final dateStr = "${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
@@ -166,10 +213,110 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
               gridData: FlGridData(show: true),
               minX: minX,
               maxX: maxX,
+              minY: minY,
+              maxY: displayMaxY,
             ),
           ),
         ),
         const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget buildFilterDropdown() {
+    // Sort MACs by their device name (alphabetically, fallback to MAC if name is null)
+    final sortedMacs = List<String>.from(allMacs)
+      ..sort((a, b) {
+        final nameA = (macNames[a] ?? a).toLowerCase();
+        final nameB = (macNames[b] ?? b).toLowerCase();
+        return nameA.compareTo(nameB);
+      });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          title: const Text('Filter Settings'),
+          trailing: Icon(isFilterDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+          onTap: () {
+            setState(() {
+              isFilterDropdownOpen = !isFilterDropdownOpen;
+            });
+          },
+        ),
+        if (isFilterDropdownOpen)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedMacs = Set<String>.from(allMacs);
+                        });
+                        fetchSensorData();
+                      },
+                      child: const Text('Select All'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedMacs.clear();
+                        });
+                        fetchSensorData();
+                      },
+                      child: const Text('Unselect All'),
+                    ),
+                    const SizedBox(width: 16),
+                    // Dropdown for fetchLimit
+                    const Text('Values:'),
+                    const SizedBox(width: 8),
+                    DropdownButton<int>(
+                      value: fetchLimit,
+                      items: const [
+                        DropdownMenuItem(value: 50, child: Text('50')),
+                        DropdownMenuItem(value: 100, child: Text('100')),
+                        DropdownMenuItem(value: 250, child: Text('250')),
+                        DropdownMenuItem(value: 500, child: Text('500')),
+                        DropdownMenuItem(value: 1000, child: Text('1000')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            fetchLimit = val;
+                          });
+                          fetchSensorData();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 200,
+                  child: ListView(
+                    children: sortedMacs.map((mac) {
+                      return CheckboxListTile(
+                        value: selectedMacs.contains(mac),
+                        title: Text(macNames[mac] ?? mac),
+                        onChanged: (checked) {
+                          setState(() {
+                            if (checked == true) {
+                              selectedMacs.add(mac);
+                            } else {
+                              selectedMacs.remove(mac);
+                            }
+                          });
+                          fetchSensorData();
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -187,17 +334,16 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  buildFilterDropdown(),
                   sensorLineChart(getChartLines('temperature'), title: 'Temperature'),
                   sensorLineChart(getChartLines('humidity'), title: 'Humidity'),
                   sensorLineChart(getChartLines('co2'), title: 'Carbon Dioxide'),
                   sensorLineChart(getChartLines('battery'), title: 'Voltage Level'),
-
-                  // Add more charts here as needed
                   Text('Legend:', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12), // Add space above the legend
+                  const SizedBox(height: 12),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0), // Add space below the legend
-                    child: buildLegend(names),
+                    padding: const EdgeInsets.only(bottom: 24.0),
+                    child: buildLegend(getMacNames(sensorData)),
                   ),
                 ],
               ),
