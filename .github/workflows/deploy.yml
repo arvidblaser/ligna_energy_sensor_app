@@ -45,16 +45,11 @@ jobs:
 
       - name: Restore keystore
         run: |
-          echo "keyAlias=$KEY_ALIAS" >> android/key.properties
-          echo "keyPassword=$KEY_PASSWORD" >> android/key.properties
-          echo "storePassword=$STORE_PASSWORD" >> android/key.properties
-          echo "storeFile="app/upload-keystore.jks" >> android/key.properties
-          echo "$STORE_FILE_BASE64" | base64 -d > android/app/upload-keystore.jks
-        env:
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          STORE_FILE_BASE64: ${{ secrets.STORE_FILE_BASE64 }}
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/key.properties
+          echo 'storeFile=app/upload-keystore.jks' >> android/key.properties
+          echo "${{ secrets.STORE_FILE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
 
       - name: Build app bundle
         run: flutter build appbundle --release
