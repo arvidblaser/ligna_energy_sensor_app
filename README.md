@@ -85,3 +85,5 @@ sudo apt install mesa-utils
 nano ~/.bashrc
 export PATH="$PATH:/home/admin/git/flutter/bin"
 source ~/.bashrc
+
+flutter build linux --release
