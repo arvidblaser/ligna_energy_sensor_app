@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/sensor_reading.dart';
 
 class DatabaseScreen extends StatefulWidget {
-  const DatabaseScreen({Key? key}) : super(key: key);
+  const DatabaseScreen({super.key});
 
   @override
   State<DatabaseScreen> createState() => _DatabaseScreenState();
@@ -27,12 +27,16 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     fetchAllMacs();
   }
 
+
+/*
+SELECT DISTINCT ON (mac) mac, name
+FROM public."SensorData"
+ORDER BY mac, created_at DESC;
+*/
+
   Future<void> fetchAllMacs() async {
-    final response = await supabase
-        .from('SensorData')
-        .select('mac, name')
-        .order('mac', ascending: true)
-        .limit(10000);
+    final response = await supabase.rpc('get_unique_sensordata');
+
     final rows = response as List<dynamic>;
     final macSet = <String>{};
     final names = <String, String>{};
@@ -73,7 +77,9 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     });
   }
 
-  Map<String, List<Map<String, dynamic>>> groupByMac(List<Map<String, dynamic>> data) {
+  Map<String, List<Map<String, dynamic>>> groupByMac(
+    List<Map<String, dynamic>> data,
+  ) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (var entry in data) {
       final mac = entry['mac'] as String?;
@@ -87,7 +93,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     final Map<String, String> names = {};
     for (var entry in data) {
       final mac = entry['mac'] as String?;
-      final name = entry['name'] as String? ;
+      final name = entry['name'] as String?;
       if (mac != null && name != null) {
         names[mac] = "$name ($mac)";
       }
@@ -97,25 +103,26 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
 
   List<LineChartBarData> getChartLines(String valueKey) {
     final grouped = groupByMac(sensorData);
-    final names = getMacNames(sensorData);
 
     return grouped.entries.map((entry) {
       final mac = entry.key;
       final data = entry.value;
-      final spots = data.map((e) {
-        final createdAt = e['created_at'];
-        double xValue;
-        if (createdAt is String) {
-          // Parse ISO8601 string to DateTime
-          xValue = DateTime.parse(createdAt).millisecondsSinceEpoch.toDouble();
-        } else if (createdAt is DateTime) {
-          xValue = createdAt.millisecondsSinceEpoch.toDouble();
-        } else {
-          xValue = 0.0;
-        }
-        final value = (e[valueKey] as num?)?.toDouble() ?? 0.0;
-        return FlSpot(xValue, value);
-      }).toList();
+      final spots =
+          data.map((e) {
+            final createdAt = e['created_at'];
+            double xValue;
+            if (createdAt is String) {
+              // Parse ISO8601 string to DateTime
+              xValue =
+                  DateTime.parse(createdAt).millisecondsSinceEpoch.toDouble();
+            } else if (createdAt is DateTime) {
+              xValue = createdAt.millisecondsSinceEpoch.toDouble();
+            } else {
+              xValue = 0.0;
+            }
+            final value = (e[valueKey] as num?)?.toDouble() ?? 0.0;
+            return FlSpot(xValue, value);
+          }).toList();
 
       return LineChartBarData(
         spots: spots,
@@ -131,17 +138,19 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   Widget buildLegend(Map<String, String> names) {
     return Wrap(
       spacing: 16,
-      children: names.entries.map((e) {
-        final color = Colors.primaries[e.key.hashCode % Colors.primaries.length];
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 16, height: 16, color: color),
-            const SizedBox(width: 4),
-            Text(e.value),
-          ],
-        );
-      }).toList(),
+      children:
+          names.entries.map((e) {
+            final color =
+                Colors.primaries[e.key.hashCode % Colors.primaries.length];
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 16, height: 16, color: color),
+                const SizedBox(width: 4),
+                Text(e.value),
+              ],
+            );
+          }).toList(),
     );
   }
 
@@ -177,21 +186,26 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
               lineBarsData: lines,
               titlesData: FlTitlesData(
                 leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 64,
-                  ),
+                  sideTitles: SideTitles(showTitles: true, reservedSize: 64),
                 ),
-                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 48,
                     getTitlesWidget: (value, meta) {
-                      final dateTime = DateTime.fromMillisecondsSinceEpoch(value.toInt());
-                      final dateStr = "${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
-                      final timeStr = "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}";
+                      final dateTime = DateTime.fromMillisecondsSinceEpoch(
+                        value.toInt(),
+                      );
+                      final dateStr =
+                          "${dateTime.year.toString().padLeft(4, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+                      final timeStr =
+                          "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}";
                       return Transform.rotate(
                         angle: -0.5,
                         child: Padding(
@@ -199,8 +213,14 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(dateStr, style: const TextStyle(fontSize: 10)),
-                              Text(timeStr, style: const TextStyle(fontSize: 10)),
+                              Text(
+                                dateStr,
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              Text(
+                                timeStr,
+                                style: const TextStyle(fontSize: 10),
+                              ),
                             ],
                           ),
                         ),
@@ -225,19 +245,20 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
 
   Widget buildFilterDropdown() {
     // Sort MACs by their device name (alphabetically, fallback to MAC if name is null)
-    final sortedMacs = List<String>.from(allMacs)
-      ..sort((a, b) {
-        final nameA = (macNames[a] ?? a).toLowerCase();
-        final nameB = (macNames[b] ?? b).toLowerCase();
-        return nameA.compareTo(nameB);
-      });
+    final sortedMacs = List<String>.from(allMacs)..sort((a, b) {
+      final nameA = (macNames[a] ?? a).toLowerCase();
+      final nameB = (macNames[b] ?? b).toLowerCase();
+      return nameA.compareTo(nameB);
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
           title: const Text('Filter Settings'),
-          trailing: Icon(isFilterDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+          trailing: Icon(
+            isFilterDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+          ),
           onTap: () {
             setState(() {
               isFilterDropdownOpen = !isFilterDropdownOpen;
@@ -296,22 +317,23 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                 SizedBox(
                   height: 200,
                   child: ListView(
-                    children: sortedMacs.map((mac) {
-                      return CheckboxListTile(
-                        value: selectedMacs.contains(mac),
-                        title: Text(macNames[mac] ?? mac),
-                        onChanged: (checked) {
-                          setState(() {
-                            if (checked == true) {
-                              selectedMacs.add(mac);
-                            } else {
-                              selectedMacs.remove(mac);
-                            }
-                          });
-                          fetchSensorData();
-                        },
-                      );
-                    }).toList(),
+                    children:
+                        sortedMacs.map((mac) {
+                          return CheckboxListTile(
+                            value: selectedMacs.contains(mac),
+                            title: Text(macNames[mac] ?? mac),
+                            onChanged: (checked) {
+                              setState(() {
+                                if (checked == true) {
+                                  selectedMacs.add(mac);
+                                } else {
+                                  selectedMacs.remove(mac);
+                                }
+                              });
+                              fetchSensorData();
+                            },
+                          );
+                        }).toList(),
                   ),
                 ),
               ],
@@ -323,31 +345,45 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final names = getMacNames(sensorData);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Sensor Data Chart')),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildFilterDropdown(),
-                  sensorLineChart(getChartLines('temperature'), title: 'Temperature'),
-                  sensorLineChart(getChartLines('humidity'), title: 'Humidity'),
-                  sensorLineChart(getChartLines('co2'), title: 'Carbon Dioxide'),
-                  sensorLineChart(getChartLines('battery'), title: 'Voltage Level'),
-                  Text('Legend:', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: buildLegend(getMacNames(sensorData)),
-                  ),
-                ],
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildFilterDropdown(),
+                    sensorLineChart(
+                      getChartLines('temperature'),
+                      title: 'Temperature',
+                    ),
+                    sensorLineChart(
+                      getChartLines('humidity'),
+                      title: 'Humidity',
+                    ),
+                    sensorLineChart(
+                      getChartLines('co2'),
+                      title: 'Carbon Dioxide',
+                    ),
+                    sensorLineChart(
+                      getChartLines('battery'),
+                      title: 'Voltage Level',
+                    ),
+                    Text(
+                      'Legend:',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24.0),
+                      child: buildLegend(getMacNames(sensorData)),
+                    ),
+                  ],
+                ),
               ),
-            ),
     );
   }
 }
