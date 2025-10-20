@@ -4,21 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-
-import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/sensor_reading.dart';
 import '../utils/database_service.dart';
 import '../utils/export_service.dart';
 
-
-
 final log = Logger('ScanResultLogger');
 final databaseService = DatabaseService(Supabase.instance.client);
 final exportService = ExportService();
-
 
 class ScanResultTile extends StatefulWidget {
   const ScanResultTile({super.key, required this.result, this.onTap});
@@ -30,7 +23,6 @@ class ScanResultTile extends StatefulWidget {
   State<ScanResultTile> createState() => _ScanResultTileState();
 }
 
-
 class _ScanResultTileState extends State<ScanResultTile> {
   BluetoothConnectionState _connectionState =
       BluetoothConnectionState.disconnected;
@@ -38,9 +30,6 @@ class _ScanResultTileState extends State<ScanResultTile> {
   late StreamSubscription<BluetoothConnectionState>
   _connectionStateSubscription;
   late StreamSubscription<List<ScanResult>> _scanResultsSubscription;
-  //
-  // Timer? _updateTimer;
-  // int _secondsSinceLastUpdate = 0;
 
   final List<SensorReading> _sensorReadingList = [];
   static const int maxDataPoints = 2160; // var 5:e sekund -> 3h, 3*3600/5
@@ -61,51 +50,43 @@ class _ScanResultTileState extends State<ScanResultTile> {
     // Prenumerera på scanresultat för att få nya avläsningar direkt
     _scanResultsSubscription = FlutterBluePlus.scanResults.listen((results) {
       if (mounted) {
-        // Hitta resultatet för denna enhet
         ScanResult? deviceResult;
-        log.fine("checking results");
         for (var result in results) {
           if (result.device.remoteId == widget.result.device.remoteId) {
-            log.fine("almost found result");
-            //if (haCorrectName(result.advertisementData.advName)) {
-              log.fine("found result: $result");
-              deviceResult = result;
-              break;
-            //}
+            deviceResult = result;
+            break;
           }
         }
 
         if (deviceResult != null &&
-            hasSensorReading(deviceResult.advertisementData, deviceResult.device.platformName)) {
-          log.fine("Sensorresults!");
-          SensorReading sr = decodeData(
+            hasSensorReading(
+              deviceResult.advertisementData,
+              deviceResult.device.platformName,
+            )) {
+          String correctName = getCorrectName(
             deviceResult.advertisementData.advName,
+            deviceResult.device.platformName,
+          );
+          SensorReading sr = decodeData(
+            correctName,
             deviceResult.advertisementData.serviceData,
           );
           addToSensorReadingList(sr);
-          databaseService.addToDatabase(sr, deviceResult.advertisementData.advName, widget.result.device.remoteId.str); // todo check if this needs to be await
+          databaseService.addToDatabase(
+            sr,
+            correctName,
+            widget.result.device.remoteId.str,
+          ); // todo check if this needs to be await
           setState(() {}); // Uppdatera UI för att visa nya data
         }
       }
     });
-
-    // // Starta timern för att uppdatera räknaren varje sekund
-    // _updateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    //       log.fine("Build anropas: ${DateTime.now()}"); // Debug-utskrift
-    //
-    //   if (mounted && _sensorReadingList.isNotEmpty) {
-    //     setState(() {
-    //       _secondsSinceLastUpdate = DateTime.now().difference(_sensorReadingList.last.timestamp).inSeconds;
-    //     });
-    //   }
-    // });
   }
 
   @override
   void dispose() {
     _connectionStateSubscription.cancel();
     _scanResultsSubscription.cancel();
-    //_updateTimer?.cancel(); // Avbryt timern när widgeten förstörs
     super.dispose();
   }
 
@@ -134,7 +115,6 @@ class _ScanResultTileState extends State<ScanResultTile> {
   }
 
   void addToSensorReadingList(SensorReading sr) {
-    // Lägg till det nya temperaturvärdet i historiken
     _sensorReadingList.add(sr);
     if (_sensorReadingList.length > maxDataPoints) {
       _sensorReadingList.removeAt(0);
@@ -149,7 +129,6 @@ class _ScanResultTileState extends State<ScanResultTile> {
     int tempFromBytes;
     int humFromBytes;
     if (name.startsWith("Ligna Card") || name.startsWith("Jiva")) {
-      // Hantera både Ligna Card och Jiva
       tempFromBytes =
           (data.entries.first.value[1] << 8) | data.entries.first.value[0];
       humFromBytes =
@@ -208,38 +187,39 @@ class _ScanResultTileState extends State<ScanResultTile> {
   }
 
   bool hasSensorReading(AdvertisementData ad, String platformName) {
-    log.fine("advertisement data: $ad");
-    if ((ad.advName.isNotEmpty || platformName.isNotEmpty) && ad.serviceData.isNotEmpty) {
-      log.fine("has sensorreading-ish");
+    if ((ad.advName.isNotEmpty || platformName.isNotEmpty) &&
+        ad.serviceData.isNotEmpty) {
       if (haCorrectName(ad.advName, platformName)) {
-        log.fine("all is fine!");
         return true;
       }
     }
-    log.fine("retrun false on sensoreading");
     return false;
   }
 
-  bool haCorrectName(String name, String platformName) {
+  // Assumes function is ony called if haCorrectName has returned true
+  String getCorrectName(String name, String platformName) {
+    if (nameFilter(name)) {
+      return name;
+    }
+    return platformName;
+  }
+
+  bool nameFilter(String name) {
     if (name.startsWith("Ligna Card") ||
         name.startsWith("Jiva") ||
         name.startsWith("Gwen") ||
         name.startsWith("Ben")) {
-      log.fine("Correct name is:$name");
       return true;
     }
-    else {
-      log.fine("Wrong name is:$name");
-    }
-        if (platformName.startsWith("Ligna Card") ||
-        platformName.startsWith("Jiva") ||
-        platformName.startsWith("Gwen") ||
-        platformName.startsWith("Ben")) {
-      log.fine("Correct platformname is:$platformName");
+    return false;
+  }
+
+  bool haCorrectName(String name, String platformName) {
+    if (nameFilter(name)) {
       return true;
     }
-    else{
-      log.fine("Wrong platformname is: $platformName");
+    if (nameFilter(platformName)) {
+      return true;
     }
     return false;
   }
@@ -254,7 +234,6 @@ class _ScanResultTileState extends State<ScanResultTile> {
       },
     );
   }
- 
 
   Widget _buildTitle(BuildContext context) {
     if (widget.result.device.platformName.isNotEmpty) {
@@ -416,7 +395,10 @@ class _ScanResultTileState extends State<ScanResultTile> {
       );
     }
     if (_sensorReadingList.isEmpty ||
-        !hasSensorReading(widget.result.advertisementData, widget.result.device.platformName)) {
+        !hasSensorReading(
+          widget.result.advertisementData,
+          widget.result.device.platformName,
+        )) {
       log.fine("build a empty result tile");
       return const SizedBox.shrink(); // Or show a placeholder/error
     }
@@ -466,7 +448,6 @@ class _ScanResultTileState extends State<ScanResultTile> {
             'Time between latest updates:',
             '$timeDifferenceInSeconds seconds',
           ),
-        //if (_sensorReadingList.isNotEmpty) _buildAdvRow(context, 'Time since last update', '$_secondsSinceLastUpdate seconds'),
         if (_sensorReadingList.isNotEmpty) _buildTemperatureChart(),
       ],
     );
