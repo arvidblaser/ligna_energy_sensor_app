@@ -60,4 +60,4 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
           packageName: com.arvdblaseref.LignaEnergySensorApp
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: alpha
+          track: internal # alpha
